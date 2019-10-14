@@ -1,12 +1,19 @@
 package com.tmtravlr.musicchoices;
 
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientAdvancementManager;
+import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -29,6 +36,8 @@ public class MusicChoicesTickHandler {
 	//A negative value means that it needs resetting
 	public static float sunBrightness = -1.0f;
 	public static int dimensionId = 0;
+
+	private Field advancementToProgress;
 	
 	//Cooldown for the music so it doesn't check every tick
 	private int achievementCooldown = 10;
@@ -38,24 +47,40 @@ public class MusicChoicesTickHandler {
 	
 	public int menuTickDelay = 10;
 
+	public MusicChoicesTickHandler() {
+		try {
+			advancementToProgress = ClientAdvancementManager.class.getDeclaredField("advancementToProgress");
+			advancementToProgress.setAccessible(true);
+			MusicChoicesMod.logger.debug("[Music Choices] Found advancementsToProgress in ClientAdvancementManager class.");
+		} catch(NoSuchFieldException e) {
+			MusicChoicesMod.logger.error("[Music Choices] Could not find 'advancementsToProgress' in ClientAdvancementManager class. Music set to play upon obtaining advancements will not work.");
+		}
+	}
+
 	@SubscribeEvent
 	public void onTick(ClientTickEvent event) {
 		
 		//Handle Advancements
 		
 		if(mc.world != null && mc.player != null) {
-			
+
+			ClientAdvancementManager clientAdvancementManager = mc.player.connection.getAdvancementManager();
+
 			if(!MusicChoicesMod.worldLoaded) {
 
-				for (Object a : AchievementList.achievementList)
-				{
-					Achievement ach = (Achievement)a;
-	
-					if (mc.player.getStatFileWriter().hasAchievementUnlocked(ach)) {
-						MusicChoicesMod.advancementsUnlocked.put(ach, true);
-					}
-					else {
-						MusicChoicesMod.advancementsUnlocked.put(ach, false);
+				if(advancementToProgress != null) {
+					for (Advancement ach : clientAdvancementManager.getAdvancementList().getAdvancements())
+					{
+						try {
+							if (((Map<Advancement, AdvancementProgress>) advancementToProgress.get(clientAdvancementManager)).get(ach).isDone()) {
+								MusicChoicesMod.advancementsUnlocked.put(ach, true);
+							}
+							else {
+								MusicChoicesMod.advancementsUnlocked.put(ach, false);
+							}
+						} catch(IllegalAccessException e) {
+							MusicChoicesMod.logger.error("[Music Choices] Could not access 'advancementsToProgress' in ClientAdvancementManager class. This should never happen; contact the mod author.");
+						}
 					}
 				}
 				
@@ -73,21 +98,24 @@ public class MusicChoicesTickHandler {
 			if (this.achievementCooldown-- <= 0)
 			{
 				this.achievementCooldown = 10;
-	
-				for (Object a : AchievementList.achievementList)
-				{
-					Achievement ach = (Achievement)a;
-	
-					if (mc.player.getStatFileWriter().hasAchievementUnlocked(ach) && !((Boolean)MusicChoicesMod.advancementsUnlocked.get(ach)).booleanValue())
+
+				if(advancementToProgress != null) {
+					for (Advancement ach : clientAdvancementManager.getAdvancementList().getAdvancements())
 					{
-						MusicChoicesMod.logger.debug("[Music Choices] Looking for achievement music for achievement " + ach.statId);
-						
-						MusicChoicesMod.advancementsUnlocked.put(ach, Boolean.valueOf(true));
-						MusicProperties toPlay = MusicProperties.findTrackForAchievement(ach.statId);
-	
-						if (toPlay != null)
-						{
-							MusicChoicesMod.ticker.playOvertopMusic(toPlay);
+						try {
+							if (((Map<Advancement, AdvancementProgress>) advancementToProgress.get(clientAdvancementManager)).get(ach).isDone() && !MusicChoicesMod.advancementsUnlocked.get(ach)) {
+								MusicChoicesMod.logger.debug("[Music Choices] Looking for achievement music for achievement " + ach.getId());
+
+								MusicChoicesMod.advancementsUnlocked.put(ach, true);
+								MusicProperties toPlay = MusicProperties.findTrackForAchievement(ach.getId().toString());
+
+								if (toPlay != null)
+								{
+									MusicChoicesMod.ticker.playOvertopMusic(toPlay);
+								}
+							}
+						} catch(IllegalAccessException e) {
+							MusicChoicesMod.logger.error("[Music Choices] Could not access 'advancementsToProgress' in ClientAdvancementManager class. This should never happen; contact the mod author.");
 						}
 					}
 				}

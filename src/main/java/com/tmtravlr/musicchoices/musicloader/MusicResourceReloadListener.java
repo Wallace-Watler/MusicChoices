@@ -2,7 +2,6 @@ package com.tmtravlr.musicchoices.musicloader;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.management.MemoryUsage;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -16,9 +15,6 @@ import com.google.gson.GsonBuilder;
 import com.tmtravlr.musicchoices.MusicChoicesMod;
 import com.tmtravlr.musicchoices.MusicProperties;
 
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.audio.SoundList;
-import net.minecraft.client.audio.SoundListSerializer;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.IResourceManagerReloadListener;
@@ -138,7 +134,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 		}
 		
 		if(propertyList.menuTickDelayMax >= 0) {
-			if(MusicChoicesMod.debug) System.out.println("[Music Choices] Loaded max menu tick as " + propertyList.menuTickDelayMax);
+			MusicChoicesMod.logger.debug("[Music Choices] Loaded max menu tick as " + propertyList.menuTickDelayMax);
 			MusicChoicesMod.menuTickDelayMax = propertyList.menuTickDelayMax;
 		}
 		
@@ -153,7 +149,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 		}
 		
 		if(propertyList.doPlayVanilla) {
-			if(MusicChoicesMod.debug) System.out.println("[Music Choices] Loaded play vanilla as " + propertyList.playVanilla);
+			MusicChoicesMod.logger.debug("[Music Choices] Loaded play vanilla as " + propertyList.playVanilla);
 			MusicChoicesMod.playVanilla = propertyList.playVanilla;
 		}
 		
