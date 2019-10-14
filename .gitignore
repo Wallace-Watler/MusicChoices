@@ -1,3 +1,7 @@
+# Test files
+pack.mcmeta
+assets
+
 # eclipse
 bin
 *.launch
@@ -49,7 +53,8 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must ends with two \r.
-Icon
+Icon
+
 
 # Thumbnails
 ._*

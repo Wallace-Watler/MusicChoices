@@ -143,19 +143,17 @@ public class MusicProperties {
 	
 	//Check that the target nbt tag has all the ones it should have
 	public static boolean hasAllTags(NBTTagCompound tagToHave, NBTTagCompound target) {
-		return tagToHave.equals(target);
-		/*
 		Set<String> tagMap = tagToHave.getKeySet();
 		for(String tag : tagMap) {
-			if(tagToHave.getTagType(tag) == 10 && target.getTagType(tag) == 10) {
+			if(tagToHave.hasKey(tag, 10) && target.hasKey(tag, 10)) {
 				return hasAllTags(tagToHave.getCompoundTag(tag), target.getCompoundTag(tag));
 			}
 			if(!tagToHave.getTag(tag).equals(target.getTag(tag))) {
 				return false;
 			}
 		}
-			
-		return true;*/
+
+		return true;
 	}
 	
 	//Find a music track that should be playing in the player's current situation from the given list

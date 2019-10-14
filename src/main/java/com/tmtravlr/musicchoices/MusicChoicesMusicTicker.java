@@ -61,8 +61,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 
 		//Check if the current music track is still valid
 
-		String start = "";
-		if(MusicChoicesMod.logger.getLevel().isLessSpecificThan(Level.INFO)) start = "Start: ( Delay: " + delay + ", Primary: " + !backgroundQueue.isEmpty()  + ", Overtop: " + !overtopQueue.isEmpty() + ") ";
+		String start = "Start: ( Delay: " + delay + ", Primary: " + !backgroundQueue.isEmpty()  + ", Overtop: " + !overtopQueue.isEmpty() + ") ";
 		
 		if(!backgroundQueue.isEmpty()) {
 			

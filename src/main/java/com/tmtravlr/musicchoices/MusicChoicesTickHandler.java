@@ -9,11 +9,9 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientAdvancementManager;
-import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -103,7 +101,7 @@ public class MusicChoicesTickHandler {
 					for (Advancement ach : clientAdvancementManager.getAdvancementList().getAdvancements())
 					{
 						try {
-							if (((Map<Advancement, AdvancementProgress>) advancementToProgress.get(clientAdvancementManager)).get(ach).isDone() && !MusicChoicesMod.advancementsUnlocked.get(ach)) {
+							if (((Map<Advancement, AdvancementProgress>) advancementToProgress.get(clientAdvancementManager)).get(ach).isDone() && !MusicChoicesMod.advancementsUnlocked.getOrDefault(ach, false)) {
 								MusicChoicesMod.logger.debug("[Music Choices] Looking for achievement music for achievement " + ach.getId());
 
 								MusicChoicesMod.advancementsUnlocked.put(ach, true);
@@ -222,13 +220,13 @@ public class MusicChoicesTickHandler {
 	
 	private Entity findEntityLookedAt() {
 		int distance = 1000;
-		
+
 		Vec3d vecPos = new Vec3d(this.mc.player.getPosition().getX(),this.mc.player.getPosition().getY(),this.mc.player.getPosition().getZ());
 		Vec3d vecLook = this.mc.player.getLook(0);
         Vec3d vecPosLook = vecPos.addVector(vecLook.x * distance, vecLook.y * distance, vecLook.z * distance);
         Entity pointedEntity = null;
-        Vec3d vecHit = null;
         float expansion = 1.0F;
+        // TODO: Figure out why entity list is always empty
         List entityList = this.mc.world.getEntitiesWithinAABBExcludingEntity(this.mc.player, this.mc.player.getEntityBoundingBox().offset(vecLook.x * distance, vecLook.y * distance, vecLook.z * distance).expand((double)expansion, (double)expansion, (double)expansion));
         double d2 = distance;
 
@@ -239,7 +237,7 @@ public class MusicChoicesTickHandler {
             if (entity.canBeCollidedWith())
             {
                 float f2 = entity.getCollisionBorderSize();
-                AxisAlignedBB axisalignedbb = entity.getCollisionBoundingBox().expand((double)f2, (double)f2, (double)f2);
+                AxisAlignedBB axisalignedbb = entity.getEntityBoundingBox().expand((double)f2, (double)f2, (double)f2);
                 RayTraceResult rayTraceResult = axisalignedbb.calculateIntercept(vecPos, vecPosLook);
 
                 if (axisalignedbb.contains(vecPos))
@@ -247,7 +245,6 @@ public class MusicChoicesTickHandler {
                     if (0.0D < d2 || d2 == 0.0D)
                     {
                         pointedEntity = entity;
-                        vecHit = rayTraceResult == null ? vecPos : rayTraceResult.hitVec;
                         d2 = 0.0D;
                     }
                 }
@@ -262,13 +259,11 @@ public class MusicChoicesTickHandler {
                             if (d2 == 0.0D)
                             {
                                 pointedEntity = entity;
-                                vecHit = rayTraceResult.hitVec;
                             }
                         }
                         else
                         {
                             pointedEntity = entity;
-                            vecHit = rayTraceResult.hitVec;
                             d2 = d3;
                         }
                     }
