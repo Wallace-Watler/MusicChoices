@@ -1,6 +1,7 @@
 package com.tmtravlr.musicchoices;
 
 import java.lang.reflect.Field;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -8,12 +9,11 @@ import java.util.Random;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.ClientAdvancementManager;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
@@ -191,20 +191,18 @@ public class MusicChoicesTickHandler {
 				
 				//See what entity the player is looking at, and play boss music if applicable. 
 				//MovingObjectPosition mop = mc.objectMouseOver;//this.mc.renderViewEntity.rayTrace(1000, 0.0f);
+
+				EntityLivingBase lookedAt = findEntityLookedAt();
 				
-				Entity lookedAt = findEntityLookedAt();
-				
-				if(lookedAt != null && lookedAt instanceof EntityLivingBase) {//mop.typeOfHit == MovingObjectPosition.MovingObjectType.ENTITY && mop.entityHit instanceof EntityLivingBase) {
+				if(lookedAt != null) {
 					MusicChoicesMod.logger.debug("[Music Choices] Entity looked at is " + lookedAt + ", with id " + EntityList.getEntityString(lookedAt));
 					
-					EntityLivingBase entity = (EntityLivingBase) lookedAt;
-					
-					if(!entity.isDead && entity.getHealth() > 0) {
-						MusicProperties toPlay = MusicProperties.findMusicFromNBTMap(entity, MusicProperties.bossMap);
+					if(!lookedAt.isDead && lookedAt.getHealth() > 0) {
+						MusicProperties toPlay = MusicProperties.findMusicFromNBTMap(lookedAt, MusicProperties.bossMap);
 						
 						if(toPlay != null) {
 							MusicChoicesMod.ticker.playBossMusic(toPlay);
-							MusicChoicesMod.ticker.bossEntity = entity;
+							MusicChoicesMod.ticker.bossEntity = lookedAt;
 						}
 					}
 				}
@@ -218,60 +216,54 @@ public class MusicChoicesTickHandler {
 		
 	}
 	
-	private Entity findEntityLookedAt() {
-		int distance = 1000;
+	private EntityLivingBase findEntityLookedAt() {
+		final double maxDistance = 100;
+		final Vec3d lookVec = mc.player.getLook(0);
+		final Vec3d playerPos = mc.player.getPositionVector();
+		final Vec3d playerEyes = mc.player.getPositionEyes(0);
+		final Vec3d horizontalPlane = lookVec.crossProduct(new Vec3d(lookVec.z, 0, -lookVec.x));
 
-		Vec3d vecPos = new Vec3d(this.mc.player.getPosition().getX(),this.mc.player.getPosition().getY(),this.mc.player.getPosition().getZ());
-		Vec3d vecLook = this.mc.player.getLook(0);
-        Vec3d vecPosLook = vecPos.addVector(vecLook.x * distance, vecLook.y * distance, vecLook.z * distance);
-        Entity pointedEntity = null;
-        float expansion = 1.0F;
-        // TODO: Figure out why entity list is always empty
-        List entityList = this.mc.world.getEntitiesWithinAABBExcludingEntity(this.mc.player, this.mc.player.getEntityBoundingBox().offset(vecLook.x * distance, vecLook.y * distance, vecLook.z * distance).expand((double)expansion, (double)expansion, (double)expansion));
-        double d2 = distance;
+		// Get all entities along line of sight
+		List<EntityLivingBase> entitiesOnLineOfSight = mc.world.getEntities(EntityLivingBase.class, entity -> {
+			if(entity == null || entity instanceof EntityPlayerSP || entity.getDistance(mc.player) > maxDistance) return false;
 
-        for (int i = 0; i < entityList.size(); ++i)
-        {
-            Entity entity = (Entity)entityList.get(i);
+			final AxisAlignedBB bb = entity.getEntityBoundingBox().offset(playerEyes.scale(-1));
+			boolean entityInFrontOfPlayer = lookVec.dotProduct(entity.getPositionVector().subtract(playerPos)) > 0;
 
-            if (entity.canBeCollidedWith())
-            {
-                float f2 = entity.getCollisionBorderSize();
-                AxisAlignedBB axisalignedbb = entity.getEntityBoundingBox().expand((double)f2, (double)f2, (double)f2);
-                RayTraceResult rayTraceResult = axisalignedbb.calculateIntercept(vecPos, vecPosLook);
+			// If player's eyes are completely within the entity's bounds or are within the horizontal bounds
+			// and player is looking vertically, entity is being looked at
+			if(0 > bb.minX && 0 < bb.maxX && 0 > bb.minZ && 0 < bb.maxZ
+					&& ((0 > bb.minY && 0 < bb.maxY) || (lookVec.x == 0 && lookVec.z == 0 && entityInFrontOfPlayer))) return true;
 
-                if (axisalignedbb.contains(vecPos))
-                {
-                    if (0.0D < d2 || d2 == 0.0D)
-                    {
-                        pointedEntity = entity;
-                        d2 = 0.0D;
-                    }
-                }
-                else if (rayTraceResult != null)
-                {
-                    double d3 = vecPos.distanceTo(rayTraceResult.hitVec);
+			if(!entityInFrontOfPlayer) return false;
 
-                    if (d3 < d2 || d2 == 0.0D)
-                    {
-                        if (entity == this.mc.player.getRidingEntity() && !entity.canRiderInteract())
-                        {
-                            if (d2 == 0.0D)
-                            {
-                                pointedEntity = entity;
-                            }
-                        }
-                        else
-                        {
-                            pointedEntity = entity;
-                            d2 = d3;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return pointedEntity;
+			// If the entity is horizontally centered on the screen, continue
+			// (More specifically, if the bottom corners of the bounding box straddle the vertical plane that cuts the
+			// field of view in half)
+			byte flags = 0;
+			flags |= lookVec.z * bb.minX - lookVec.x * bb.minZ > 0 ? 0b0001 : 0;
+			flags |= lookVec.z * bb.minX - lookVec.x * bb.maxZ > 0 ? 0b0010 : 0;
+			flags |= lookVec.z * bb.maxX - lookVec.x * bb.minZ > 0 ? 0b0100 : 0;
+			flags |= lookVec.z * bb.maxX - lookVec.x * bb.maxZ > 0 ? 0b1000 : 0;
+			if(flags == 0 || flags == 15) return false;
+
+			// If the entity is vertically centered on the screen, return true
+			// (More specifically, if the corners of the bounding box straddle the horizontal plane that cuts the
+			// field of view in half)
+			flags = 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.minX, bb.minY, bb.minZ)) > 0 ? 0b00000001 : 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.minX, bb.minY, bb.maxZ)) > 0 ? 0b00000010 : 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.minX, bb.maxY, bb.minZ)) > 0 ? 0b00000100 : 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.minX, bb.maxY, bb.maxZ)) > 0 ? 0b00001000 : 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.maxX, bb.minY, bb.minZ)) > 0 ? 0b00010000 : 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.maxX, bb.minY, bb.maxZ)) > 0 ? 0b00100000 : 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.maxX, bb.maxY, bb.minZ)) > 0 ? 0b01000000 : 0;
+			flags |= horizontalPlane.dotProduct(new Vec3d(bb.maxX, bb.maxY, bb.maxZ)) > 0 ? 0b10000000 : 0;
+			return !(flags == 0 || flags == -128);
+		});
+
+		if(entitiesOnLineOfSight.size() == 0) return null;
+		entitiesOnLineOfSight.sort(Comparator.comparingDouble(entity -> entity.getDistanceSq(playerEyes.x, playerEyes.y, playerEyes.z)));
+		return entitiesOnLineOfSight.get(0);
 	}
-	
 }
