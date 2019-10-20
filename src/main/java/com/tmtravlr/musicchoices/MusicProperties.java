@@ -35,35 +35,35 @@ public class MusicProperties {
 	
 	//Some quick access static lists
 	
-	public static ArrayList<MusicProperties> menuList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> menuList = new ArrayList<>();
 	
-	public static ArrayList<MusicProperties> creditsList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> creditsList = new ArrayList<>();
 	
-	public static ArrayList<MusicProperties> loginList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> loginList = new ArrayList<>();
 	
-	public static ArrayList<MusicProperties> deathList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> deathList = new ArrayList<>();
 	
-	public static ArrayList<MusicProperties> respawnList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> respawnList = new ArrayList<>();
 	
-	public static ArrayList<MusicProperties> sunriseList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> sunriseList = new ArrayList<>();
 	
-	public static ArrayList<MusicProperties> sunsetList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> sunsetList = new ArrayList<>();
 	
-	public static HashMap<String, ArrayList<MusicProperties>> achievementMap = new HashMap<String, ArrayList<MusicProperties>>();
+	public static HashMap<String, ArrayList<MusicProperties>> achievementMap = new HashMap<>();
 	
-	public static HashMap<NBTTagCompound, ArrayList<MusicProperties>> bossMap = new HashMap<NBTTagCompound, ArrayList<MusicProperties>>();
+	public static HashMap<NBTTagCompound, ArrayList<MusicProperties>> bossMap = new HashMap<>();
 	
-	public static HashMap<NBTTagCompound, ArrayList<MusicProperties>> bossStopMap = new HashMap<NBTTagCompound, ArrayList<MusicProperties>>();
+	public static HashMap<NBTTagCompound, ArrayList<MusicProperties>> bossStopMap = new HashMap<>();
 	
-	public static HashMap<NBTTagCompound, ArrayList<MusicProperties>> victoryMap = new HashMap<NBTTagCompound, ArrayList<MusicProperties>>();
+	public static HashMap<NBTTagCompound, ArrayList<MusicProperties>> victoryMap = new HashMap<>();
 	
-	public static HashMap<String, ArrayList<MusicProperties>> battleMap = new HashMap<String, ArrayList<MusicProperties>>();
+	public static HashMap<String, ArrayList<MusicProperties>> battleMap = new HashMap<>();
 	
-	public static ArrayList<MusicProperties> battleBlacklisted = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> battleBlacklisted = new ArrayList<>();
 	
-	public static HashMap<String, ArrayList<MusicProperties>> battleStopMap = new HashMap<String, ArrayList<MusicProperties>>();
+	public static HashMap<String, ArrayList<MusicProperties>> battleStopMap = new HashMap<>();
 	
-	public static ArrayList<MusicProperties> ingameList = new ArrayList<MusicProperties>();
+	public static ArrayList<MusicProperties> ingameList = new ArrayList<>();
 	
 	
 	//Static methods to do useful things.
@@ -102,7 +102,7 @@ public class MusicProperties {
 	
 	//Attempts to find a music track from the given map that applies to the given entity.
 	public static MusicProperties findMusicFromNBTMap(EntityLivingBase entity, HashMap<NBTTagCompound, ArrayList<MusicProperties>> nbtMap) {
-		ArrayList<ArrayList<MusicProperties>> applicableLists = new ArrayList<ArrayList<MusicProperties>>();
+		ArrayList<ArrayList<MusicProperties>> applicableLists = new ArrayList<>();
 		
 		for(NBTTagCompound currentTag : nbtMap.keySet()) {
 			ArrayList<MusicProperties> currentList = nbtMap.get(currentTag);
@@ -160,7 +160,7 @@ public class MusicProperties {
 	public static MusicProperties findTrackForCurrentSituationFromList(ArrayList<MusicProperties> propertyList) {
 		
 		int maxPriority = 1;
-		ArrayList<MusicProperties> releventList = new ArrayList<MusicProperties>();
+		ArrayList<MusicProperties> releventList = new ArrayList<>();
 		
 		for(MusicProperties music : propertyList) {
 			
@@ -188,7 +188,7 @@ public class MusicProperties {
 	}
 	
 	public static MusicProperties findBattleMusicFromBlacklist(String entityName) {
-		ArrayList<MusicProperties> releventList = new ArrayList<MusicProperties>();
+		ArrayList<MusicProperties> releventList = new ArrayList<>();
 		
 		for(MusicProperties music : battleBlacklisted) {
 			if(music.propertyList.battleBlacklistEntities != null && !music.propertyList.battleBlacklistEntities.contains(entityName)) {
@@ -215,7 +215,7 @@ public class MusicProperties {
 		
 		//If properties are null, assume this is a vanilla track.
 		if(music.properties == null) {
-			return vanillaMusicType.getMusicLocation().equals(music.music.getSoundLocation());
+			return vanillaMusicType.getMusicLocation().getSoundName().equals(music.music.getSoundLocation());
 		}
 		
 		//First check for menu or credits music
@@ -229,17 +229,10 @@ public class MusicProperties {
 		}
 		
 		//Then check for music that should play in-game
-		
-		if(mc.world != null && mc.player != null) {
-			if(!checkIfPropertiesApply(music.properties)) {
-				return false;
-			}
-		}
-		
-		return true;
+		return mc.world == null || mc.player == null || checkIfPropertiesApply(music.properties);
 	}
 	
-	public static boolean checkIfPropertiesApply(MusicPropertyList properties) {
+	private static boolean checkIfPropertiesApply(MusicPropertyList properties) {
 		int dimension = mc.world.provider.getDimension();
 		int x = MathHelper.floor(mc.player.posX);
 		int y = MathHelper.floor(mc.player.posY);
@@ -248,8 +241,8 @@ public class MusicProperties {
 		boolean isCreative = mc.player.capabilities.isCreativeMode;
 		Chunk chunk = mc.world.getChunkFromBlockCoords(new BlockPos(x, 0, z));
 		//Note for the two below: if below the world, assume it's "underground", and if above the world, assume it's open sky
-		boolean isArtificialLight = (y >= 0 && y < 256) ? chunk.getLightFor(EnumSkyBlock.BLOCK, new BlockPos(x & 15, y, z & 15)) >= 7 : false;
-		boolean isSky = (y >= 0 && y < 256) ? chunk.getLightFor(EnumSkyBlock.SKY, new BlockPos(x & 15, y, z & 15)) >= 7 : y < 0 ? false : true;
+		boolean isArtificialLight = (y >= 0 && y < 256) && chunk.getLightFor(EnumSkyBlock.BLOCK, new BlockPos(x & 15, y, z & 15)) >= 7;
+		boolean isSky = (y >= 0 && y < 256) ? chunk.getLightFor(EnumSkyBlock.SKY, new BlockPos(x & 15, y, z & 15)) >= 7 : y >= 0;
 		boolean isDay = mc.world.getSunBrightness(1.0F) > 0.5F;
 		boolean isRain = mc.world.isRaining() && !mc.world.isThundering();
 		boolean isStorm = mc.world.isThundering();
@@ -354,12 +347,8 @@ public class MusicProperties {
 		if(y < properties.heightMin) {
 			return false;
 		}
-		
-		if(y > properties.heightMax) {
-			return false;
-		}
-		
-		return true;
+
+		return y <= properties.heightMax;
 	}
 	
 	
@@ -368,7 +357,7 @@ public class MusicProperties {
 	//Actual music properties class start:
 	
 	//The sound
-	public ResourceLocation location = null;
+	public ResourceLocation location;
 	
 	//The properties of the music track(s) loaded in.
 	public MusicPropertyList propertyList;

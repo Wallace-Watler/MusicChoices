@@ -55,6 +55,7 @@ public class MusicChoicesTickHandler {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@SubscribeEvent
 	public void onTick(ClientTickEvent event) {
 		

@@ -87,7 +87,7 @@ public class MChHelper {
 		return entity instanceof EntityPlayer ? "Player" : entity.getName();
 	}
 	
-	public static Class getEntityClassFromName(String name) {
+	public static Class<? extends Entity> getEntityClassFromName(String name) {
 		if(name.equals("Player")) return EntityPlayer.class;
 		return EntityList.getClassFromName(name);
 	}

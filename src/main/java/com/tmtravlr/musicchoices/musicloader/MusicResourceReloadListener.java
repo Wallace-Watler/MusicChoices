@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,56 +52,40 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 		
 		//Clear out all the previous music, if any.
 		MusicProperties.clearAllLists();
-		
-		Iterator iterator = manager.getResourceDomains().iterator();
 
-        while (iterator.hasNext())
-        {
-            String s = (String)iterator.next();
+		for (String s : manager.getResourceDomains()) {
+			try {
+				List list = manager.getAllResources(new ResourceLocation(s, "sounds.json"));
 
-            try
-            {
-                List list = manager.getAllResources(new ResourceLocation(s, "sounds.json"));
-                Iterator iterator1 = list.iterator();
+				for (Object value : list) {
+					IResource iresource = (IResource) value;
 
-                while (iterator1.hasNext())
-                {
-                    IResource iresource = (IResource)iterator1.next();
+					try {
+						MusicChoicesMod.logger.debug("[Music Choices] Loading in a Sounds.json file.");
 
-                    try
-                    {
-                    	MusicChoicesMod.logger.debug("[Music Choices] Loading in a Sounds.json file.");
-                    	
-                        Map map = GSON.fromJson(new InputStreamReader(iresource.getInputStream()), TYPE);
-                        Iterator iterator2 = map.entrySet().iterator();
-                        while (iterator2.hasNext())
-                        {
-                            Entry entry = (Entry)iterator2.next();
-                            
-                            //Don't load in music that isn't meant to be loaded in.
-                        	if (entry.getValue() != null) { 
-                        		if (((MusicPropertyList)entry.getValue()).isMusic) {
-	                        		MusicChoicesMod.logger.debug("[Music Choices] Loading properties for " + s + ":" + entry.getKey());
-	                        		this.loadMusicProperties(s, (String)entry.getKey(), (MusicPropertyList)entry.getValue());
-	                        	}
-                        		else if (((MusicPropertyList)entry.getValue()).isOptions && !MusicChoicesMod.overrideJsonOptions) {
-                        			this.loadMusicOptions((MusicPropertyList)entry.getValue());
-                        		}
-                        	}
-                        }
-                    }
-                    catch (RuntimeException runtimeexception)
-                    {
-                    	MusicChoicesMod.logger.warn("Invalid sounds.json", runtimeexception);
-                        MusicChoicesMod.logger.trace(runtimeexception.getStackTrace());
-                    }
-                }
-            }
-            catch (IOException ioexception)
-            {
-                ;
-            }
-        }
+						Map map = GSON.fromJson(new InputStreamReader(iresource.getInputStream()), TYPE);
+						for (Object o : map.entrySet()) {
+							Entry entry = (Entry) o;
+
+							//Don't load in music that isn't meant to be loaded in.
+							if (entry.getValue() != null) {
+								if (((MusicPropertyList) entry.getValue()).isMusic) {
+									MusicChoicesMod.logger.debug("[Music Choices] Loading properties for " + s + ":" + entry.getKey());
+									this.loadMusicProperties(s, (String) entry.getKey(), (MusicPropertyList) entry.getValue());
+								} else if (((MusicPropertyList) entry.getValue()).isOptions && !MusicChoicesMod.overrideJsonOptions) {
+									this.loadMusicOptions((MusicPropertyList) entry.getValue());
+								}
+							}
+						}
+					} catch (RuntimeException runtimeexception) {
+						MusicChoicesMod.logger.warn("Invalid sounds.json", runtimeexception);
+						MusicChoicesMod.logger.trace(runtimeexception.getStackTrace());
+					}
+				}
+			} catch (IOException ioexception) {
+				MusicChoicesMod.logger.trace(ioexception.getStackTrace());
+			}
+		}
 	}
 	
 	private void loadMusicOptions(MusicPropertyList propertyList) {
@@ -189,7 +172,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 				//if(MusicChoicesMod.debug) System.out.println("Adding boss" + (tag.getString("id").equals("") ? "." : " called " + tag.getString("id")));
 				ArrayList<MusicProperties> bossEntry = MusicProperties.bossMap.get(tag);
 				if(bossEntry == null) {
-					bossEntry = new ArrayList<MusicProperties>();
+					bossEntry = new ArrayList<>();
 				}
 				bossEntry.add(entry);
 				MusicProperties.bossMap.put(tag, bossEntry);
@@ -202,7 +185,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 			for(NBTTagCompound tag : propertyList.bossStopTags) {
 				ArrayList<MusicProperties> bossEntry = MusicProperties.bossStopMap.get(tag);
 				if(bossEntry == null) {
-					bossEntry = new ArrayList<MusicProperties>();
+					bossEntry = new ArrayList<>();
 				}
 				bossEntry.add(entry);
 				MusicProperties.bossStopMap.put(tag, bossEntry);
@@ -215,7 +198,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 			for(NBTTagCompound tag : propertyList.victoryTags) {
 				ArrayList<MusicProperties> victoryEntry = MusicProperties.victoryMap.get(tag);
 				if(victoryEntry == null) {
-					victoryEntry = new ArrayList<MusicProperties>();
+					victoryEntry = new ArrayList<>();
 				}
 				victoryEntry.add(entry);
 				MusicProperties.victoryMap.put(tag, victoryEntry);
@@ -229,7 +212,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 			for(String entityName : propertyList.battleEntities) {
 				ArrayList<MusicProperties> musicList = MusicProperties.battleMap.get(entityName);
 				if(musicList == null) {
-					musicList = new ArrayList<MusicProperties>();
+					musicList = new ArrayList<>();
 				}
 				musicList.add(entry);
 				MusicProperties.battleMap.put(entityName, musicList);
@@ -246,7 +229,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 			for(String entityName : propertyList.battleStopEntities) {
 				ArrayList<MusicProperties> musicList = MusicProperties.battleStopMap.get(entityName);
 				if(musicList == null) {
-					musicList = new ArrayList<MusicProperties>();
+					musicList = new ArrayList<>();
 				}
 				musicList.add(entry);
 				MusicProperties.battleStopMap.put(entityName, musicList);
@@ -286,7 +269,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 		if(propertyList.allAchievements) {
 			ArrayList<MusicProperties> achList = MusicProperties.achievementMap.get("all");
 			if(achList == null) {
-				achList = new ArrayList<MusicProperties>();
+				achList = new ArrayList<>();
 			}
 			achList.add(entry);
 			
@@ -298,7 +281,7 @@ public class MusicResourceReloadListener implements IResourceManagerReloadListen
 			for(String ach : propertyList.achievements) {
 				ArrayList<MusicProperties> achList = MusicProperties.achievementMap.get(ach);
 				if(achList == null) {
-					achList = new ArrayList<MusicProperties>();
+					achList = new ArrayList<>();
 				}
 				achList.add(entry);
 				

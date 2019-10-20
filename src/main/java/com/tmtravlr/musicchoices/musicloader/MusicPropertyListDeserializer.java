@@ -35,7 +35,6 @@ public class MusicPropertyListDeserializer implements JsonDeserializer
 		JsonObject jsonObject = JsonUtils.getJsonObject(jsonElement, "entry");
 		MusicPropertyList properties = new MusicPropertyList();
 		
-		
 		properties.isOptions = JsonUtils.getBoolean(jsonObject, "options", false);
 
 		if(properties.isOptions) {
@@ -293,12 +292,12 @@ public class MusicPropertyListDeserializer implements JsonDeserializer
 				if(value.equalsIgnoreCase("true")) {
 					properties.allGamemodes = false;
 					properties.creative = true;
-					MusicChoicesMod.logger.debug("[Music Choices]     - creative is " + properties.creative);
+					MusicChoicesMod.logger.debug("[Music Choices]     - creative is true");
 				}
 				else if(value.equalsIgnoreCase("false")) {
 					properties.allGamemodes = false;
 					properties.creative = false;
-					MusicChoicesMod.logger.debug("[Music Choices]     - creative is " + properties.creative);
+					MusicChoicesMod.logger.debug("[Music Choices]     - creative is false");
 				}
 				else {
 					properties.allGamemodes = true;

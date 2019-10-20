@@ -81,6 +81,7 @@ public class MusicChoicesMod {
     public static Map<Advancement, Boolean> advancementsUnlocked = new HashMap<>();
     public static boolean worldLoaded = false;
 
+    @SuppressWarnings("unused")
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         musicChoices = this;
@@ -120,6 +121,7 @@ public class MusicChoicesMod {
         MChRegisterer.registerResourceReloadListeners();
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         //Replace the vanilla music ticker with our custom one
@@ -136,9 +138,5 @@ public class MusicChoicesMod {
         catch(Exception e) {
             throw new ReportedException(new CrashReport("Music Choices couldn't load in it's music ticker! Things won't work. =( Better let Tmtravlr know.", e));
         }
-    }
-
-    public static boolean isGamePaused() {
-        return mc.isSingleplayer() && mc.currentScreen != null && mc.currentScreen.doesGuiPauseGame() && !(mc.getIntegratedServer() != null && mc.getIntegratedServer().getPublic());
     }
 }

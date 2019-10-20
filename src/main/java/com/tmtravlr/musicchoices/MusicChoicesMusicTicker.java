@@ -17,7 +17,6 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
-import org.apache.logging.log4j.Level;
 
 /**
  * Music ticker based on the vanilla MusicTicker class which plays music based on the current
@@ -33,9 +32,9 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 	private static final Random rand = new Random();
 	private static final Minecraft mc = Minecraft.getMinecraft();
 	
-	public LinkedList<BackgroundMusic> backgroundQueue = new LinkedList<BackgroundMusic>();
-	public LinkedList<OvertopMusic> overtopQueue = new LinkedList<OvertopMusic>();
-	public LinkedList<BackgroundMusic> battleQueue = new LinkedList<BackgroundMusic>();
+	public LinkedList<BackgroundMusic> backgroundQueue = new LinkedList<>();
+	public LinkedList<OvertopMusic> overtopQueue = new LinkedList<>();
+	public LinkedList<BackgroundMusic> battleQueue = new LinkedList<>();
 	
 	public BackgroundMusic bossMusic;
 	public EntityLivingBase bossEntity;
@@ -57,7 +56,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 	}
 
 	public void update() {
-		MusicType vanillaMusicType = this.mc.getAmbientMusicType();
+		MusicType vanillaMusicType = mc.getAmbientMusicType();
 
 		//Check if the current music track is still valid
 
@@ -83,7 +82,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 				
 				//Check if the sound is actually still playing
 			
-				if (!this.mc.getSoundHandler().isSoundPlaying(backMusic.music))
+				if (!mc.getSoundHandler().isSoundPlaying(backMusic.music))
 				{
 					MusicChoicesMod.logger.debug("[Music Choices] Background music stopped.");
 					
@@ -94,10 +93,10 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 					
 					it.remove();
 					if(mc.currentScreen instanceof GuiMainMenu || mc.player == null) {
-						this.delay = Math.min(MathHelper.getInt(this.rand, MusicChoicesMod.menuTickDelayMin/*vanillaMusicType.func_148634_b()*/, MusicChoicesMod.menuTickDelayMax/*vanillaMusicType.func_148633_c()*/), this.delay);
+						this.delay = Math.min(MathHelper.getInt(rand, MusicChoicesMod.menuTickDelayMin/*vanillaMusicType.func_148634_b()*/, MusicChoicesMod.menuTickDelayMax/*vanillaMusicType.func_148633_c()*/), this.delay);
 					}
 					else {
-						this.delay = Math.min(MathHelper.getInt(this.rand, MusicChoicesMod.ingameTickDelayMin/*vanillaMusicType.func_148634_b()*/, MusicChoicesMod.ingameTickDelayMax/*vanillaMusicType.func_148633_c()*/), this.delay);
+						this.delay = Math.min(MathHelper.getInt(rand, MusicChoicesMod.ingameTickDelayMin/*vanillaMusicType.func_148634_b()*/, MusicChoicesMod.ingameTickDelayMax/*vanillaMusicType.func_148633_c()*/), this.delay);
 					}
 				}
 			}
@@ -148,7 +147,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 				
 				//Remove the music if it's no longer playing
 				
-				if(!this.mc.getSoundHandler().isSoundPlaying(battleMusic.music)) {
+				if(!mc.getSoundHandler().isSoundPlaying(battleMusic.music)) {
 					MusicChoicesMod.logger.debug("[Music Choices] Stopping battle music track.");
 					
 					if(battleMusic.music.primary) {
@@ -193,7 +192,6 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 			
 			if (backgroundQueue.isEmpty() && this.delay-- <= 0) {
 				this.delay = Integer.MAX_VALUE;
-				boolean doMusic = true;
 				
 				if(!playBackgroundMusic()) {
 					this.delay = 100;
@@ -216,8 +214,6 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 		
 		if(bossMusic != null) {
 			//if(MusicChoicesMod.debug) System.out.println("[Music Choices] Boss: " + bossEntity + ", dead? " + (bossEntity == null ? null : bossEntity.isDead) + ", health? " + (bossEntity == null ? null : bossEntity.getHealth()) + ", age? " + (bossEntity == null ? null : bossEntity.ticksExisted) + ", sameCount: " + sameCount);
-			
-			boolean bugged = false;
 			
 			if(bossEntity != null) {
 				if(prevBossAge != bossEntity.ticksExisted) {
@@ -278,7 +274,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 		
 		if(battleMusic != null) {
 			if(this.battleEntityType != null) {
-				Class entityClass = MChHelper.getEntityClassFromName(this.battleEntityType);
+				Class<? extends Entity> entityClass = MChHelper.getEntityClassFromName(this.battleEntityType);
 				
 				List<Entity> entitiesNear = mc.world.getEntitiesWithinAABB(entityClass, new AxisAlignedBB(mc.player.posX - MusicChoicesMod.battleDistance, mc.player.posY - MusicChoicesMod.battleDistance, mc.player.posZ - MusicChoicesMod.battleDistance, mc.player.posX + MusicChoicesMod.battleDistance, mc.player.posY + MusicChoicesMod.battleDistance, mc.player.posZ + MusicChoicesMod.battleDistance));
 				
@@ -381,7 +377,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 		setOvertopMusic(toPlay, prop.propertyList);
 		
 		MusicChoicesMod.logger.debug("[Music Choices] Playing credits music track called " + toPlay.getSoundLocation());
-		this.mc.getSoundHandler().playSound(toPlay);
+		mc.getSoundHandler().playSound(toPlay);
 	}
 	
 	public void playBattleMusic(MusicProperties prop) {
@@ -392,7 +388,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 			battleQueue.add(this.battleMusic);
 			
 			MusicChoicesMod.logger.debug("[Music Choices] Playing battle music track called " + toPlay.getSoundLocation());
-			this.mc.getSoundHandler().playSound(toPlay);
+			mc.getSoundHandler().playSound(toPlay);
 		}
 	}
 	
@@ -410,21 +406,17 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 		this.battleQueue.add(new BackgroundMusic(toPlay, prop.propertyList));
 		
 		MusicChoicesMod.logger.debug("[Music Choices] Playing boss music track called " + toPlay.getSoundLocation());
-		this.mc.getSoundHandler().playSound(toPlay);
+		mc.getSoundHandler().playSound(toPlay);
 	}
 	
 	public boolean playBackgroundMusic() {
-		MusicType vanillaMusicType = this.mc.getAmbientMusicType();
+		MusicType vanillaMusicType = mc.getAmbientMusicType();
 		boolean foundCurrentlyPlaying = false;
 		
 		//Fade out any other tracks playing
 		
 		if(!backgroundQueue.isEmpty()) {
-			Iterator it = backgroundQueue.iterator();
-			
-			while(it.hasNext()) {
-				BackgroundMusic backMusic = (BackgroundMusic) it.next();
-				
+			for (BackgroundMusic backMusic : backgroundQueue) {
 				backMusic.music.primary = false;
 			}
 		}
@@ -432,12 +424,8 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 		//Search for a track currently playing that now applies
 		
 		if(!backgroundQueue.isEmpty()) {
-			Iterator it = backgroundQueue.iterator();
-			
-			while(it.hasNext()) {
-				BackgroundMusic backMusic = (BackgroundMusic) it.next();
-				
-				if(MusicProperties.checkIfMusicStillApplies(backMusic, vanillaMusicType)) {
+			for (BackgroundMusic backMusic : backgroundQueue) {
+				if (MusicProperties.checkIfMusicStillApplies(backMusic, vanillaMusicType)) {
 					backMusic.music.primary = true;
 					foundCurrentlyPlaying = true;
 					break;
@@ -480,7 +468,7 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 				
 				MusicChoicesMod.logger.debug("Playing music track called " + toPlay.music.getSoundLocation());
 				backgroundQueue.addLast(toPlay);
-				this.mc.getSoundHandler().playSound(toPlay.music);
+				mc.getSoundHandler().playSound(toPlay.music);
 				
 				return true;
 			}
@@ -496,15 +484,11 @@ public class MusicChoicesMusicTicker extends MusicTicker {
 		setOvertopMusic(toPlay, prop.propertyList);
 		
 		MusicChoicesMod.logger.debug("[Music Choices] Playing over-top music track called " + toPlay.getSoundLocation());
-		this.mc.getSoundHandler().playSound(toPlay);
+		mc.getSoundHandler().playSound(toPlay);
 	}
 	
 	public boolean setOvertopMusic(ISound sound, MusicPropertyList properties) {
-		MusicType vanillaMusicType = this.mc.getAmbientMusicType();
-		
 		//Stop the current background music if not set to overlap
-		
-		boolean canPlay = true;
 		
 		if(properties == null || !properties.overlap) {
 			this.globalBgFadeVolume = 0.001f;

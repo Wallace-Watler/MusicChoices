@@ -24,7 +24,8 @@ public class MusicChoicesEventHandler {
 	
 	private Minecraft mc = Minecraft.getMinecraft();
 	private Random rand = new Random();
-	
+
+	@SuppressWarnings("unused")
 	@SubscribeEvent
 	public void onSound(PlaySoundEvent event) {
 
@@ -41,6 +42,7 @@ public class MusicChoicesEventHandler {
 	/**
 	 * Plays the credits music when the credits GUI is opened.
 	 */
+	@SuppressWarnings("unused")
 	@SubscribeEvent
 	public void onCredits(GuiOpenEvent event) {
 		if (event.getGui() instanceof GuiWinGame && MusicChoicesMod.ticker.creditsMusic == null) {
@@ -57,6 +59,7 @@ public class MusicChoicesEventHandler {
 	}
 	
 	@SubscribeEvent
+	@SuppressWarnings("unused")
 	public void onAttack(AttackEntityEvent event) {
 		
 		if(event.getTarget() instanceof EntityLivingBase) {
@@ -99,9 +102,7 @@ public class MusicChoicesEventHandler {
 			
 			//Next check the entity hitting
 			if(target instanceof EntityPlayer && attacker != mc.player) {
-				if(playBattleMusicForEntity(attacker)) {
-					return;
-				}
+				playBattleMusicForEntity(attacker);
 			}
 		}
 	}

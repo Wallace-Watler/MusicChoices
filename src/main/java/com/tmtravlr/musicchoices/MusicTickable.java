@@ -1,6 +1,5 @@
 package com.tmtravlr.musicchoices;
 
-import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.ITickableSound;
 import net.minecraft.client.audio.PositionedSound;
 import net.minecraft.util.ResourceLocation;
@@ -40,10 +39,6 @@ public class MusicTickable extends PositionedSound implements ITickableSound {
 		this.xPosF = posX;
 		this.yPosF = posY;
 		this.zPosF = posZ;
-	}
-	
-	public static MusicTickable copyFrom(ISound sound) {
-		return new MusicTickable(sound.getSoundLocation(), sound.getVolume(), sound.getPitch(), sound.canRepeat(), sound.getRepeatDelay(), sound.getAttenuationType(), sound.getXPosF(), sound.getYPosF(), sound.getZPosF());
 	}
 
 	@Override
